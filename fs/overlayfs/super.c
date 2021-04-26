@@ -6,6 +6,8 @@
 
 #include <uapi/linux/magic.h>
 #include <linux/fs.h>
+#include <linux/fs_context.h>
+#include <linux/fs_parser.h>
 #include <linux/namei.h>
 #include <linux/xattr.h>
 #include <linux/mount.h>
@@ -354,14 +356,17 @@ static inline int ovl_xino_def(void)
  */
 static int ovl_show_options(struct seq_file *m, struct dentry *dentry)
 {
+	pr_warn("why no work\n");
 	struct super_block *sb = dentry->d_sb;
 	struct ovl_fs *ofs = sb->s_fs_info;
 
+	pr_warn("plz work\n");
 	seq_show_option(m, "lowerdir", ofs->config.lowerdir);
 	if (ofs->config.upperdir) {
 		seq_show_option(m, "upperdir", ofs->config.upperdir);
 		seq_show_option(m, "workdir", ofs->config.workdir);
 	}
+	pr_warn("really plz\n");
 	if (ofs->config.default_permissions)
 		seq_puts(m, ",default_permissions");
 	if (strcmp(ofs->config.redirect_mode, ovl_redirect_mode_def()) != 0)
@@ -422,18 +427,12 @@ enum {
 	OPT_WORKDIR,
 	OPT_DEFAULT_PERMISSIONS,
 	OPT_REDIRECT_DIR,
-	OPT_INDEX_ON,
-	OPT_INDEX_OFF,
-	OPT_UUID_ON,
-	OPT_UUID_OFF,
-	OPT_NFS_EXPORT_ON,
+	OPT_INDEX,
+	OPT_UUID,
+	OPT_NFS_EXPORT,
 	OPT_USERXATTR,
-	OPT_NFS_EXPORT_OFF,
-	OPT_XINO_ON,
-	OPT_XINO_OFF,
-	OPT_XINO_AUTO,
-	OPT_METACOPY_ON,
-	OPT_METACOPY_OFF,
+	OPT_XINO,
+	OPT_METACOPY,
 	OPT_VOLATILE,
 	OPT_ERR,
 };
@@ -444,18 +443,18 @@ static const match_table_t ovl_tokens = {
 	{OPT_WORKDIR,			"workdir=%s"},
 	{OPT_DEFAULT_PERMISSIONS,	"default_permissions"},
 	{OPT_REDIRECT_DIR,		"redirect_dir=%s"},
-	{OPT_INDEX_ON,			"index=on"},
-	{OPT_INDEX_OFF,			"index=off"},
+	// {OPT_INDEX_ON,			"index=on"},
+	// {OPT_INDEX_OFF,			"index=off"},
 	{OPT_USERXATTR,			"userxattr"},
-	{OPT_UUID_ON,			"uuid=on"},
-	{OPT_UUID_OFF,			"uuid=off"},
-	{OPT_NFS_EXPORT_ON,		"nfs_export=on"},
-	{OPT_NFS_EXPORT_OFF,		"nfs_export=off"},
-	{OPT_XINO_ON,			"xino=on"},
-	{OPT_XINO_OFF,			"xino=off"},
-	{OPT_XINO_AUTO,			"xino=auto"},
-	{OPT_METACOPY_ON,		"metacopy=on"},
-	{OPT_METACOPY_OFF,		"metacopy=off"},
+	// {OPT_UUID_ON,			"uuid=on"},
+	// {OPT_UUID_OFF,			"uuid=off"},
+	// {OPT_NFS_EXPORT_ON,		"nfs_export=on"},
+	// {OPT_NFS_EXPORT_OFF,		"nfs_export=off"},
+	// {OPT_XINO_ON,			"xino=on"},
+	// {OPT_XINO_OFF,			"xino=off"},
+	// {OPT_XINO_AUTO,			"xino=auto"},
+	// {OPT_METACOPY_ON,		"metacopy=on"},
+	// {OPT_METACOPY_OFF,		"metacopy=off"},
 	{OPT_VOLATILE,			"volatile"},
 	{OPT_ERR,			NULL}
 };
@@ -559,55 +558,55 @@ static int ovl_parse_opt(char *opt, struct ovl_config *config)
 			redirect_opt = true;
 			break;
 
-		case OPT_INDEX_ON:
-			config->index = true;
-			index_opt = true;
-			break;
+		// case OPT_INDEX_ON:
+		// 	config->index = true;
+		// 	index_opt = true;
+		// 	break;
 
-		case OPT_INDEX_OFF:
-			config->index = false;
-			index_opt = true;
-			break;
+		// case OPT_INDEX_OFF:
+		// 	config->index = false;
+		// 	index_opt = true;
+		// 	break;
 
-		case OPT_UUID_ON:
-			config->uuid = true;
-			break;
+		// case OPT_UUID_ON:
+		// 	config->uuid = true;
+		// 	break;
 
-		case OPT_UUID_OFF:
-			config->uuid = false;
-			break;
+		// case OPT_UUID_OFF:
+		// 	config->uuid = false;
+		// 	break;
 
-		case OPT_NFS_EXPORT_ON:
-			config->nfs_export = true;
-			nfs_export_opt = true;
-			break;
+		// case OPT_NFS_EXPORT_ON:
+		// 	config->nfs_export = true;
+		// 	nfs_export_opt = true;
+		// 	break;
 
-		case OPT_NFS_EXPORT_OFF:
-			config->nfs_export = false;
-			nfs_export_opt = true;
-			break;
+		// case OPT_NFS_EXPORT_OFF:
+		// 	config->nfs_export = false;
+		// 	nfs_export_opt = true;
+		// 	break;
 
-		case OPT_XINO_ON:
-			config->xino = OVL_XINO_ON;
-			break;
+		// case OPT_XINO_ON:
+		// 	config->xino = OVL_XINO_ON;
+		// 	break;
 
-		case OPT_XINO_OFF:
-			config->xino = OVL_XINO_OFF;
-			break;
+		// case OPT_XINO_OFF:
+		// 	config->xino = OVL_XINO_OFF;
+		// 	break;
 
-		case OPT_XINO_AUTO:
-			config->xino = OVL_XINO_AUTO;
-			break;
+		// case OPT_XINO_AUTO:
+		// 	config->xino = OVL_XINO_AUTO;
+		// 	break;
 
-		case OPT_METACOPY_ON:
-			config->metacopy = true;
-			metacopy_opt = true;
-			break;
+		// case OPT_METACOPY_ON:
+		// 	config->metacopy = true;
+		// 	metacopy_opt = true;
+		// 	break;
 
-		case OPT_METACOPY_OFF:
-			config->metacopy = false;
-			metacopy_opt = true;
-			break;
+		// case OPT_METACOPY_OFF:
+		// 	config->metacopy = false;
+		// 	metacopy_opt = true;
+		// 	break;
 
 		case OPT_VOLATILE:
 			config->ovl_volatile = true;
@@ -1929,7 +1928,7 @@ static struct dentry *ovl_get_root(struct super_block *sb,
 	return root;
 }
 
-static int ovl_fill_super(struct super_block *sb, void *data, int silent)
+static int ovl_set_super(struct super_block *sb, struct fs_context *fc)
 {
 	struct path upperpath = { };
 	struct dentry *root_dentry;
@@ -1959,19 +1958,16 @@ static int ovl_fill_super(struct super_block *sb, void *data, int silent)
 	/* Is there a reason anyone would want not to share whiteouts? */
 	ofs->share_whiteout = true;
 
-	ofs->config.index = ovl_index_def;
-	ofs->config.uuid = true;
-	ofs->config.nfs_export = ovl_nfs_export_def;
-	ofs->config.xino = ovl_xino_def();
-	ofs->config.metacopy = ovl_metacopy_def;
-	err = ovl_parse_opt((char *) data, &ofs->config);
-	if (err)
-		goto out_err;
+	// err = ovl_parse_opt((char *) data, &ofs->config);
+	// if (err)
+	// 	goto out_err;
+
+	ofs->config = *((struct ovl_config*) fc->fs_private);
 
 	err = -EINVAL;
 	if (!ofs->config.lowerdir) {
-		if (!silent)
-			pr_err("missing 'lowerdir'\n");
+		// if (!silent)
+		// 	pr_err("missing 'lowerdir'\n");
 		goto out_err;
 	}
 
@@ -2120,18 +2116,179 @@ out:
 	return err;
 }
 
-static struct dentry *ovl_mount(struct file_system_type *fs_type, int flags,
-				const char *dev_name, void *raw_data)
+// static struct dentry *ovl_mount(struct file_system_type *fs_type, int flags,
+// 				const char *dev_name, void *raw_data)
+// {
+// 	return mount_nodev(fs_type, flags, raw_data, ovl_fill_super);
+// }
+
+enum {
+	Opt_xino_auto,
+	Opt_xino_off,
+	Opt_xino_on,
+};
+
+static const struct constant_table ovl_param_enums_xino[] = {
+	{"auto", Opt_xino_auto},
+	{"off", Opt_xino_off},
+	{"on", Opt_xino_on},
+	{}
+};
+
+static const struct fs_parameter_spec ovl_fs_parameters[] = {
+	fsparam_string("lowerdir", OPT_LOWERDIR),
+	fsparam_path("upperdir", OPT_UPPERDIR),
+	fsparam_path("workdir", OPT_WORKDIR),
+	fsparam_flag("default_permissions", OPT_DEFAULT_PERMISSIONS),
+	fsparam_path("redirect_dir", OPT_REDIRECT_DIR),
+	fsparam_bool("index", OPT_INDEX),
+	fsparam_flag("userxattr", OPT_USERXATTR),
+	fsparam_bool("uuid", OPT_UUID),
+	fsparam_bool("nfs_export", OPT_NFS_EXPORT),
+	fsparam_enum("xino", OPT_XINO, ovl_param_enums_xino),
+	fsparam_bool("metacopy", OPT_METACOPY),
+	fsparam_flag("volatile", OPT_VOLATILE),
+	{}
+};
+
+static int ovl_fs_context_parse_param(struct fs_context *fc, struct fs_parameter *param)
 {
-	return mount_nodev(fs_type, flags, raw_data, ovl_fill_super);
+	struct ovl_config *config = fc->fs_private;
+	struct fs_parse_result result;
+	int opt;
+
+	opt = fs_parse(fc, ovl_fs_parameters, param, &result);
+	if (opt < 0)
+		return opt;
+
+	switch (opt) {
+	case OPT_UPPERDIR:
+		kfree(config->upperdir);
+		config->upperdir = param->string;
+		param->string = NULL;
+		break;
+	case OPT_LOWERDIR:
+		kfree(config->lowerdir);
+		config->lowerdir = param->string;
+		param->string = NULL;
+		break;
+	case OPT_WORKDIR:
+		kfree(config->workdir);
+		config->workdir = param->string;
+		param->string = NULL;
+		break;
+	case OPT_DEFAULT_PERMISSIONS:
+		config->default_permissions = true;
+		break;
+	case OPT_REDIRECT_DIR:
+		kfree(config->redirect_mode);
+		config->redirect_mode = param->string;
+		break;
+	case OPT_INDEX:
+		config->index = result.int_32;
+		break;
+	case OPT_UUID:
+		config->uuid = result.int_32;
+		break;
+	case OPT_NFS_EXPORT:
+		config->nfs_export = result.int_32;
+		break;
+	case OPT_XINO:
+		config->xino = result.int_32;
+		break;
+	case OPT_METACOPY:
+		config->metacopy = result.int_32;
+		break;
+	case OPT_VOLATILE:
+		config->ovl_volatile = true;
+		break;
+	case OPT_USERXATTR:
+		config->userxattr = true;
+		break;
+	default:
+		// TODO: Error handling with contexts
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int ovl_compare_super(struct super_block *sb, struct fs_context *fc)
+{
+	// struct nfs_server *server = fc->s_fs_info, *old = NFS_SB(sb);
+
+	// if (!nfs_compare_super_address(old, server))
+	// 	return 0;
+	// /* Note: NFS_MOUNT_UNSHARED == NFS4_MOUNT_UNSHARED */
+	// if (old->flags & NFS_MOUNT_UNSHARED)
+	// 	return 0;
+	// if (memcmp(&old->fsid, &server->fsid, sizeof(old->fsid)) != 0)
+	// 	return 0;
+	// if (!nfs_compare_userns(old, server))
+	// 	return 0;
+	// return nfs_compare_mount_options(sb, server, fc);
+	return 0;
+}
+
+static int ovl_get_tree(struct fs_context *fc)
+{
+	struct super_block *s;
+	s = sget_fc(fc, ovl_compare_super, ovl_set_super);
+	fc->root = s->s_root;
+	return 0;
+}
+
+static int ovl_fs_context_dup(struct fs_context *fc, struct fs_context *src_fc)
+{
+	// TODO: write this
+	pr_warn("No dup for you\n");
+	return 0;
+}
+
+static void ovl_fs_context_free(struct fs_context *fc)
+{
+	struct ovl_config *config = fc->fs_private;
+	if(config)
+		kfree(config);
+}
+
+
+static const struct fs_context_operations ovl_fs_context_ops = {
+	.free			= ovl_fs_context_free,
+	.dup			= ovl_fs_context_dup,
+	.parse_param		= ovl_fs_context_parse_param,
+	.parse_monolithic	= NULL,
+	.get_tree		= ovl_get_tree,
+	.reconfigure		= NULL,
+};
+
+static int ovl_init_fs_context(struct fs_context *fc)
+{
+
+	struct ovl_config *config;
+
+	config = kzalloc(sizeof(struct ovl_config), GFP_KERNEL);
+	if (!config)
+		return -ENOMEM;
+
+	config->index = ovl_index_def;
+	config->uuid = true;
+	config->nfs_export = ovl_nfs_export_def;
+	config->xino = ovl_xino_def();
+	config->metacopy = ovl_metacopy_def;
+
+	fc->fs_private = config;
+	fc->ops = &ovl_fs_context_ops;
+	return 0;
 }
 
 static struct file_system_type ovl_fs_type = {
 	.owner		= THIS_MODULE,
 	.name		= "overlay",
 	.fs_flags	= FS_USERNS_MOUNT,
-	.mount		= ovl_mount,
 	.kill_sb	= kill_anon_super,
+	.init_fs_context = ovl_init_fs_context,
+	.parameters = ovl_fs_parameters,
 };
 MODULE_ALIAS_FS("overlay");
 
